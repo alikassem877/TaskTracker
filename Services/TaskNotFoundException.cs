@@ -1,5 +1,3 @@
-using System;
-
 namespace TaskTracker.Services;
 
 public class TaskNotFoundException : Exception

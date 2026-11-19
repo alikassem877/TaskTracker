@@ -1,6 +1,3 @@
-
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using TaskTracker.Models;
 
 namespace TaskTracker.Repositories;

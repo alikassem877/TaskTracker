@@ -29,7 +29,9 @@ catch (TaskNotFoundException ex)
 // Group tasks by priority
 var tasks = await repository.GetAllAsync();
 
-var groups = tasks.GroupBy(task => task.Priority);
+var groups = tasks
+    .GroupBy(task => task.Priority)
+    .OrderBy(group => group.Key);
 
 foreach (var group in groups)
 {

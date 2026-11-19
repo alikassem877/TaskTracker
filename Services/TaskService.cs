@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using TaskTracker.Models;
 using TaskTracker.Repositories;
 
@@ -36,4 +34,4 @@ public class TaskService(ITaskRepository taskRepository)
 
         await taskRepository.UpdateAsync(completedTask);
     }
-};
+}
