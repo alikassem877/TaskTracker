@@ -37,4 +37,35 @@ public class TaskService(
 
         await taskRepository.UpdateAsync(completedTask);
     }
+
+    public async Task<IReadOnlyList<TaskItem>> GetAllTasksAsync()
+{
+    return await taskRepository.GetAllAsync();
+}
+
+public async Task<TaskItem> GetTaskByIdAsync(int id)
+{
+    var task = await taskRepository.GetByIdAsync(id);
+
+    if (task is null)
+    {
+        throw new TaskNotFoundException(
+            $"Task with ID {id} was not found."
+        );
+    }
+
+    return task;
+}
+
+public async Task DeleteTaskAsync(int id)
+{
+    var deleted = await taskRepository.DeleteAsync(id);
+
+    if (!deleted)
+    {
+        throw new TaskNotFoundException(
+            $"Task with ID {id} was not found."
+        );
+    }
+}
 }

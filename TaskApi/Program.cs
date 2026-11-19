@@ -20,22 +20,15 @@ builder.Services.AddProblemDetails();
 var app = builder.Build();
 app.UseExceptionHandler();
 
-app.MapGet("/api/tasks", async (ITaskRepository repository) =>
+app.MapGet("/api/tasks", async (TaskService service) =>
 {
-    var tasks = await repository.GetAllAsync();
-
+    var tasks = await service.GetAllTasksAsync();
     return Results.Ok(tasks);
 });
 
-app.MapGet("/api/tasks/{id}", async (int id, ITaskRepository repository) =>
+app.MapGet("/api/tasks/{id}", async (int id, TaskService service) =>
 {
-    var task = await repository.GetByIdAsync(id);
-
-    if (task is null)
-    {
-        return Results.NotFound();
-    }
-
+    var task = await service.GetTaskByIdAsync(id);
     return Results.Ok(task);
 });
 
@@ -52,16 +45,10 @@ app.MapPut("/api/tasks/{id}/complete", async (int id, TaskService service) =>
     return Results.NoContent();
 });
 
-app.MapDelete("/api/tasks/{id}", async (int id, ITaskRepository repository) =>
+app.MapDelete("/api/tasks/{id}", async (int id, TaskService service) =>
 {
-    var deleted = await repository.DeleteAsync(id);
-
-    if (deleted)
-    {
-        return Results.NoContent();
-    }
-
-    return Results.NotFound();
+    await service.DeleteTaskAsync(id);
+    return Results.NoContent();
 });
 
 // Configure the HTTP request pipeline.
