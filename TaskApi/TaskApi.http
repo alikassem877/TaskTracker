@@ -51,3 +51,6 @@ Content-Type: application/json
 
 ### Complete a task that does not exist
 PUT http://localhost:5205/api/tasks/999/complete
+
+### Test centralized exception handling
+PUT http://localhost:5205/api/tasks/999/complete

@@ -1,6 +1,7 @@
 using TaskTracker.Repositories;
 using TaskTracker.Services;
 using TaskApi.DTOs;
+using TaskApi.ExceptionHandlers;
 using TaskTracker.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddValidation();
+builder.Services.AddExceptionHandler<TaskNotFoundExceptionHandler>();
+builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<ITaskRepository, InMemoryTaskRepository>();
 builder.Services.AddSingleton<TaskIdGenerator>();
 builder.Services.AddScoped<TaskService>();
@@ -45,15 +48,8 @@ app.MapPost("/api/tasks", async (CreateTaskRequest request, TaskService service)
 
 app.MapPut("/api/tasks/{id}/complete", async (int id, TaskService service) =>
 {
-    try
-    {
-        await service.CompleteAsync(id);
-        return Results.NoContent();
-    }
-    catch (TaskNotFoundException)
-    {
-        return Results.NotFound();
-    }
+    await service.CompleteAsync(id);
+    return Results.NoContent();
 });
 
 app.MapDelete("/api/tasks/{id}", async (int id, ITaskRepository repository) =>
