@@ -30,6 +30,18 @@ public class InMemoryTaskRepository : ITaskRepository
         _tasks.Add(task.Id, task);
     }
 
+    public async Task UpdateAsync(TaskItem task)
+    {
+        await Task.Delay(50);
+
+        if (!_tasks.ContainsKey(task.Id))
+        {
+            throw new KeyNotFoundException($"Task with ID {task.Id} was not found.");
+        }
+
+        _tasks[task.Id] = task;
+    }
+
     public async Task<bool> DeleteAsync(int id)
     {
         await Task.Delay(50);

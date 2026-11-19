@@ -35,3 +35,19 @@ foreach (var group in groups)
 {
     Console.WriteLine($"{group.Key}: {group.Count()} tasks");
 }
+
+try
+{
+    await repository.UpdateAsync(
+        new TaskItem(99, "Test task", Priority.Low, true)
+    );
+}
+catch (KeyNotFoundException ex)
+{
+    Console.WriteLine(ex.Message);
+}
+
+var taskOne = await repository.GetByIdAsync(1);
+
+Console.WriteLine($"Task 1 still exists: {taskOne is not null}");
+Console.WriteLine($"Task 1 completed: {taskOne?.IsDone}");

@@ -13,5 +13,7 @@ public interface ITaskRepository
 
     Task AddAsync(TaskItem task);
 
+    Task UpdateAsync(TaskItem task);
+
     Task<bool> DeleteAsync(int id);
 }

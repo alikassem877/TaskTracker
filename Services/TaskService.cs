@@ -34,9 +34,6 @@ public class TaskService(ITaskRepository taskRepository)
 
         var completedTask = task with { IsDone = true };
 
-        await taskRepository.DeleteAsync(id);
-        await taskRepository.AddAsync(completedTask);
+        await taskRepository.UpdateAsync(completedTask);
     }
-
-    
 };
