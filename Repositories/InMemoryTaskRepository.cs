@@ -1,48 +1,57 @@
+using System.Collections.Concurrent;
 using TaskTracker.Models;
 
 namespace TaskTracker.Repositories;
 
 public class InMemoryTaskRepository : ITaskRepository
 {
-    private readonly Dictionary<int, TaskItem> _tasks = new();
+    private readonly ConcurrentDictionary<int, TaskItem> _tasks = new();
 
-    public async Task<IReadOnlyList<TaskItem>> GetAllAsync()
+    public Task<IReadOnlyList<TaskItem>> GetAllAsync()
     {
-        await Task.Delay(50);
-
-        return _tasks.Values.ToList();
+        IReadOnlyList<TaskItem> tasks = _tasks.Values.ToList();
+        return Task.FromResult(tasks);
     }
 
-    public async Task<TaskItem?> GetByIdAsync(int id)
+    public Task<TaskItem?> GetByIdAsync(int id)
     {
-        await Task.Delay(50);
-
-        return _tasks.TryGetValue(id, out var task) ? task : null;
+        _tasks.TryGetValue(id, out var task);
+        return Task.FromResult(task);
     }
 
-    public async Task AddAsync(TaskItem task)
+    public Task AddAsync(TaskItem task)
     {
-        await Task.Delay(50);
-
-        _tasks.Add(task.Id, task);
-    }
-
-    public async Task UpdateAsync(TaskItem task)
-    {
-        await Task.Delay(50);
-
-        if (!_tasks.ContainsKey(task.Id))
+        if (!_tasks.TryAdd(task.Id, task))
         {
-            throw new KeyNotFoundException($"Task with ID {task.Id} was not found.");
+            throw new InvalidOperationException(
+                $"Task with ID {task.Id} already exists."
+            );
         }
 
-        _tasks[task.Id] = task;
+        return Task.CompletedTask;
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public Task UpdateAsync(TaskItem task)
     {
-        await Task.Delay(50);
+        if (!_tasks.TryGetValue(task.Id, out var existing))
+        {
+            throw new KeyNotFoundException(
+                $"Task with ID {task.Id} was not found."
+            );
+        }
 
-        return _tasks.Remove(id);
+        if (!_tasks.TryUpdate(task.Id, task, existing))
+        {
+            throw new InvalidOperationException(
+                $"Task with ID {task.Id} was modified concurrently."
+            );
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> DeleteAsync(int id)
+    {
+        return Task.FromResult(_tasks.TryRemove(id, out _));
     }
 }
