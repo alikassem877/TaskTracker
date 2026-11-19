@@ -9,7 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="TaskApi/**/*.cs" />
+  <Compile Remove="TaskApi/**/*.cs" />
+  <Compile Remove="TaskTracker.Core/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="TaskTracker.Core\TaskTracker.Core.csproj" />
   </ItemGroup>
 
 </Project>
