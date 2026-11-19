@@ -1,0 +1,103 @@
+using TaskTracker.Repositories;
+using TaskTracker.Services;
+using TaskApi.DTOs;
+using TaskTracker.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
+builder.Services.AddValidation();
+builder.Services.AddSingleton<ITaskRepository, InMemoryTaskRepository>();
+builder.Services.AddSingleton<TaskIdGenerator>();
+builder.Services.AddScoped<TaskService>();
+
+builder.Services.AddProblemDetails();
+var app = builder.Build();
+app.UseExceptionHandler();
+
+app.MapGet("/api/tasks", async (ITaskRepository repository) =>
+{
+    var tasks = await repository.GetAllAsync();
+
+    return Results.Ok(tasks);
+});
+
+app.MapGet("/api/tasks/{id}", async (int id, ITaskRepository repository) =>
+{
+    var task = await repository.GetByIdAsync(id);
+
+    if (task is null)
+    {
+        return Results.NotFound();
+    }
+
+    return Results.Ok(task);
+});
+
+app.MapPost("/api/tasks", async (CreateTaskRequest request, TaskService service) =>
+{
+    var task = await service.AddTaskAsync(request.Title, request.Priority);
+
+    return Results.Created($"/api/tasks/{task.Id}", task);
+});
+
+app.MapPut("/api/tasks/{id}/complete", async (int id, TaskService service) =>
+{
+    try
+    {
+        await service.CompleteAsync(id);
+        return Results.NoContent();
+    }
+    catch (TaskNotFoundException)
+    {
+        return Results.NotFound();
+    }
+});
+
+app.MapDelete("/api/tasks/{id}", async (int id, ITaskRepository repository) =>
+{
+    var deleted = await repository.DeleteAsync(id);
+
+    if (deleted)
+    {
+        return Results.NoContent();
+    }
+
+    return Results.NotFound();
+});
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+app.UseHttpsRedirection();
+
+var summaries = new[]
+{
+    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+};
+
+app.MapGet("/weatherforecast", () =>
+{
+    var forecast = Enumerable.Range(1, 5).Select(index =>
+        new WeatherForecast
+        (
+            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+            Random.Shared.Next(-20, 55),
+            summaries[Random.Shared.Next(summaries.Length)]
+        ))
+        .ToArray();
+    return forecast;
+})
+.WithName("GetWeatherForecast");
+
+app.Run();
+
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+{
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+}

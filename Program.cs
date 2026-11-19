@@ -4,7 +4,8 @@ using TaskTracker.Repositories;
 using TaskTracker.Services;
 
 ITaskRepository repository = new InMemoryTaskRepository();
-var service = new TaskService(repository);
+var idGenerator = new TaskIdGenerator();
+var service = new TaskService(repository, idGenerator);
 
 // Add 5 tasks
 await service.AddTaskAsync("Learn C#", Priority.High);

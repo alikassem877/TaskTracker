@@ -1,0 +1,53 @@
+@TaskApi_HostAddress = http://localhost:5205
+
+GET {{TaskApi_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
+
+GET {{TaskApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+### Create a task
+POST http://localhost:5205/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Learn ASP.NET Core",
+  "priority": 2
+}
+
+### Get the created task
+GET http://localhost:5205/api/tasks/1
+
+### Get all tasks
+GET http://localhost:5205/api/tasks
+
+### Complete a task
+PUT http://localhost:5205/api/tasks/1/complete
+
+### Delete a task
+DELETE http://localhost:5205/api/tasks/1
+
+### Test invalid task
+POST http://localhost:5205/api/tasks
+Content-Type: application/json
+
+{
+  "title": "",
+  "priority": 2
+}
+
+### Test title length
+POST http://localhost:5205/api/tasks
+Content-Type: application/json
+
+{
+  "title": "This is a very long task title that exceeds the maximum allowed length of one hundred characters and should fail validation",
+  "priority": 2
+}
+
+### Complete a task that does not exist
+PUT http://localhost:5205/api/tasks/999/complete

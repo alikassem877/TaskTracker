@@ -3,22 +3,25 @@ using TaskTracker.Repositories;
 
 namespace TaskTracker.Services;
 
-public class TaskService(ITaskRepository taskRepository)
+public class TaskService(
+    ITaskRepository taskRepository,
+    TaskIdGenerator idGenerator)
 {
-    private int _nextId = 1;
 
-    public async Task AddTaskAsync(string title, Priority priority)
+    public async Task<TaskItem> AddTaskAsync(string title, Priority priority)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
 
         var task = new TaskItem(
-            Id: _nextId++,
+            Id: idGenerator.GetNextId(),
             Title: title,
             Priority: priority,
             IsDone: false
         );
 
         await taskRepository.AddAsync(task);
+
+        return task;
     }
 
     public async Task CompleteAsync(int id)
