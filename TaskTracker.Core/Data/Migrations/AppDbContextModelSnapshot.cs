@@ -42,7 +42,7 @@ namespace TaskTracker.Core.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int?>("UserId")
+                    b.Property<int>("UserId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -83,7 +83,9 @@ namespace TaskTracker.Core.Data.Migrations
                 {
                     b.HasOne("TaskTracker.Models.User", null)
                         .WithMany("Tasks")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("TaskTracker.Models.User", b =>

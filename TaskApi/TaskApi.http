@@ -1,15 +1,32 @@
 
 @TaskApi_HostAddress = http://localhost:5205
-@TaskId = 1
+@TaskId = 105
+@email = testuser4@example.com
+@password = aaaassssd
+
+### Login (send this first)
+# @name login
+POST {{TaskApi_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+###
 
 ### Get all tasks
 GET {{TaskApi_HostAddress}}/api/tasks
+Authorization: Bearer {{login.response.body.token}}
 Accept: application/json
 
 ###
 
 ### Create a task
+# @name createTask
 POST {{TaskApi_HostAddress}}/api/tasks
+Authorization: Bearer {{login.response.body.token}}
 Content-Type: application/json
 
 {
@@ -21,22 +38,26 @@ Content-Type: application/json
 
 ### Get a task by ID
 GET {{TaskApi_HostAddress}}/api/tasks/{{TaskId}}
+Authorization: Bearer {{login.response.body.token}}
 Accept: application/json
 
 ###
 
 ### Complete a task
 PUT {{TaskApi_HostAddress}}/api/tasks/{{TaskId}}/complete
+Authorization: Bearer {{login.response.body.token}}
 
 ###
 
 ### Delete a task
 DELETE {{TaskApi_HostAddress}}/api/tasks/{{TaskId}}
+Authorization: Bearer {{login.response.body.token}}
 
 ###
 
-### Test: Empty title (should return 400)
+### Test: Empty title (400)
 POST {{TaskApi_HostAddress}}/api/tasks
+Authorization: Bearer {{login.response.body.token}}
 Content-Type: application/json
 
 {
@@ -46,8 +67,9 @@ Content-Type: application/json
 
 ###
 
-### Test: Title exceeds 100 characters (should return 400)
+### Test: Title exceeds 100 characters (400)
 POST {{TaskApi_HostAddress}}/api/tasks
+Authorization: Bearer {{login.response.body.token}}
 Content-Type: application/json
 
 {
@@ -57,8 +79,9 @@ Content-Type: application/json
 
 ###
 
-### Test: Invalid priority (should return 400)
+### Test: Invalid priority (400)
 POST {{TaskApi_HostAddress}}/api/tasks
+Authorization: Bearer {{login.response.body.token}}
 Content-Type: application/json
 
 {
@@ -68,57 +91,23 @@ Content-Type: application/json
 
 ###
 
-### Test: Get nonexistent task (should return 404)
-GET {{TaskApi_HostAddress}}/api/tasks/999
+### Test: Get nonexistent task (404)
+GET {{TaskApi_HostAddress}}/api/tasks/999999
+Authorization: Bearer {{login.response.body.token}}
 
 ###
 
-### Test: Complete nonexistent task (should return 404)
-PUT {{TaskApi_HostAddress}}/api/tasks/999/complete
+### Test: Complete nonexistent task (404)
+PUT {{TaskApi_HostAddress}}/api/tasks/999999/complete
+Authorization: Bearer {{login.response.body.token}}
 
 ###
 
-### Test: Delete nonexistent task (should return 404)
-DELETE {{TaskApi_HostAddress}}/api/tasks/999
+### Test: Delete nonexistent task (404)
+DELETE {{TaskApi_HostAddress}}/api/tasks/999999
+Authorization: Bearer {{login.response.body.token}}
 
 ###
 
-PUT http://localhost:5205/api/tasks/999999/complete
-
-###
-
-PUT http://localhost:5205/api/tasks/1/complete
-
-###
-
-GET http://localhost:5205/api/tasks/1
-
-###
-
-PUT http://localhost:5205/api/tasks/999999/complete
-
-###
-
-PUT http://localhost:5205/api/tasks/999999/complete
-
-###
-
-### Register user
-POST http://localhost:5205/api/auth/register
-Content-Type: application/json
-
-{
-  "email": "ali@example.com",
-  "password": "StrongPass123!"
-}
-
-###
-
-### Login
-POST http://localhost:5205/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "ali@example.com",
-  "password": "StrongPass123!"
-}
+### Test: Unauthenticated request (401)
+GET {{TaskApi_HostAddress}}/api/tasks

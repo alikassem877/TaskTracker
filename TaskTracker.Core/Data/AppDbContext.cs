@@ -37,9 +37,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(user => user.PasswordHash)
                 .IsRequired();
 
-            entity.HasMany(user => user.Tasks)
-            .WithOne()
-            .HasForeignKey(task => task.UserId);
+             entity.HasMany(user => user.Tasks)
+           .WithOne()
+           .HasForeignKey(task => task.UserId)
+            .IsRequired();
         });
     }
 }
