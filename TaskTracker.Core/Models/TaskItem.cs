@@ -5,5 +5,5 @@ public record TaskItem(
     string Title,
     Priority Priority,
     bool IsDone,
-    int? UserId
+    int UserId
 );
