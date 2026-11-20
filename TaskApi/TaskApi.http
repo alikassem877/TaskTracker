@@ -1,38 +1,42 @@
+
 @TaskApi_HostAddress = http://localhost:5205
+@TaskId = 1
 
-GET {{TaskApi_HostAddress}}/openapi/v1.json
-Accept: application/json
-
-###
-
-GET {{TaskApi_HostAddress}}/weatherforecast/
+### Get all tasks
+GET {{TaskApi_HostAddress}}/api/tasks
 Accept: application/json
 
 ###
 
 ### Create a task
-POST http://localhost:5205/api/tasks
+POST {{TaskApi_HostAddress}}/api/tasks
 Content-Type: application/json
 
 {
-  "title": "Learn ASP.NET Core",
+  "title": "Learn Entity Framework Core",
   "priority": 2
 }
 
-### Get the created task
-GET http://localhost:5205/api/tasks/1
+###
 
-### Get all tasks
-GET http://localhost:5205/api/tasks
+### Get a task by ID
+GET {{TaskApi_HostAddress}}/api/tasks/{{TaskId}}
+Accept: application/json
+
+###
 
 ### Complete a task
-PUT http://localhost:5205/api/tasks/1/complete
+PUT {{TaskApi_HostAddress}}/api/tasks/{{TaskId}}/complete
+
+###
 
 ### Delete a task
-DELETE http://localhost:5205/api/tasks/1
+DELETE {{TaskApi_HostAddress}}/api/tasks/{{TaskId}}
 
-### Test invalid task
-POST http://localhost:5205/api/tasks
+###
+
+### Test: Empty title (should return 400)
+POST {{TaskApi_HostAddress}}/api/tasks
 Content-Type: application/json
 
 {
@@ -40,8 +44,10 @@ Content-Type: application/json
   "priority": 2
 }
 
-### Test title length
-POST http://localhost:5205/api/tasks
+###
+
+### Test: Title exceeds 100 characters (should return 400)
+POST {{TaskApi_HostAddress}}/api/tasks
 Content-Type: application/json
 
 {
@@ -49,30 +55,28 @@ Content-Type: application/json
   "priority": 2
 }
 
-### Complete a task that does not exist
-PUT http://localhost:5205/api/tasks/999/complete
-
-### Test centralized exception handling
-PUT http://localhost:5205/api/tasks/999/complete
-
 ###
 
-GET http://localhost:5205/api/tasks/999
-
-###
-
-DELETE http://localhost:5205/api/tasks/999
-
-###
-
-PUT http://localhost:5205/api/tasks/999/complete
-
-###
-
-POST http://localhost:5205/api/tasks
+### Test: Invalid priority (should return 400)
+POST {{TaskApi_HostAddress}}/api/tasks
 Content-Type: application/json
 
 {
   "title": "Invalid priority test",
   "priority": 99
 }
+
+###
+
+### Test: Get nonexistent task (should return 404)
+GET {{TaskApi_HostAddress}}/api/tasks/999
+
+###
+
+### Test: Complete nonexistent task (should return 404)
+PUT {{TaskApi_HostAddress}}/api/tasks/999/complete
+
+###
+
+### Test: Delete nonexistent task (should return 404)
+DELETE {{TaskApi_HostAddress}}/api/tasks/999

@@ -4,23 +4,22 @@ using TaskTracker.Repositories;
 using TaskTracker.Services;
 
 ITaskRepository repository = new InMemoryTaskRepository();
-var idGenerator = new TaskIdGenerator();
-var service = new TaskService(repository, idGenerator);
+var taskService = new TaskService(repository);
 
 // Add 5 tasks
-await service.AddTaskAsync("Learn C#", Priority.High);
-await service.AddTaskAsync("Practice SQL", Priority.Medium);
-await service.AddTaskAsync("Build API", Priority.High);
-await service.AddTaskAsync("Learn Angular", Priority.Low);
-await service.AddTaskAsync("Practice Git", Priority.Medium);
+await taskService.AddTaskAsync("Learn C#", Priority.High);
+await taskService.AddTaskAsync("Practice SQL", Priority.Medium);
+await taskService.AddTaskAsync("Build API", Priority.High);
+await taskService.AddTaskAsync("Learn Angular", Priority.Low);
+await taskService.AddTaskAsync("Practice Git", Priority.Medium);
 
 // Complete a task
-await service.CompleteAsync(1);
+await taskService.CompleteAsync(1);
 
 // Test custom exception
 try
 {
-    await service.CompleteAsync(99);
+    await taskService.CompleteAsync(99);
 }
 catch (TaskNotFoundException ex)
 {

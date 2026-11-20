@@ -7,19 +7,24 @@ public class InMemoryTaskRepository : ITaskRepository
 {
     private readonly ConcurrentDictionary<int, TaskItem> _tasks = new();
 
-    public Task<IReadOnlyList<TaskItem>> GetAllAsync()
+    public Task<IReadOnlyList<TaskItem>> GetAllAsync(
+        CancellationToken cancellationToken = default)
     {
         IReadOnlyList<TaskItem> tasks = _tasks.Values.ToList();
         return Task.FromResult(tasks);
     }
 
-    public Task<TaskItem?> GetByIdAsync(int id)
+    public Task<TaskItem?> GetByIdAsync(
+        int id,
+        CancellationToken cancellationToken = default)
     {
         _tasks.TryGetValue(id, out var task);
         return Task.FromResult(task);
     }
 
-    public Task AddAsync(TaskItem task)
+    public Task AddAsync(
+        TaskItem task,
+        CancellationToken cancellationToken = default)
     {
         if (!_tasks.TryAdd(task.Id, task))
         {
@@ -31,7 +36,9 @@ public class InMemoryTaskRepository : ITaskRepository
         return Task.CompletedTask;
     }
 
-    public Task UpdateAsync(TaskItem task)
+    public Task UpdateAsync(
+        TaskItem task,
+        CancellationToken cancellationToken = default)
     {
         if (!_tasks.TryGetValue(task.Id, out var existing))
         {
@@ -50,7 +57,9 @@ public class InMemoryTaskRepository : ITaskRepository
         return Task.CompletedTask;
     }
 
-    public Task<bool> DeleteAsync(int id)
+    public Task<bool> DeleteAsync(
+        int id,
+        CancellationToken cancellationToken = default)
     {
         return Task.FromResult(_tasks.TryRemove(id, out _));
     }

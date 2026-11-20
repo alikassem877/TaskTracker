@@ -4,13 +4,22 @@ namespace TaskTracker.Repositories;
 
 public interface ITaskRepository
 {
-    Task<IReadOnlyList<TaskItem>> GetAllAsync();
+    Task<IReadOnlyList<TaskItem>> GetAllAsync(
+        CancellationToken cancellationToken = default);
 
-    Task<TaskItem?> GetByIdAsync(int id);
+    Task<TaskItem?> GetByIdAsync(
+        int id,
+        CancellationToken cancellationToken = default);
 
-    Task AddAsync(TaskItem task);
+    Task AddAsync(
+        TaskItem task,
+        CancellationToken cancellationToken = default);
 
-    Task UpdateAsync(TaskItem task);
+    Task UpdateAsync(
+        TaskItem task,
+        CancellationToken cancellationToken = default);
 
-    Task<bool> DeleteAsync(int id);
+    Task<bool> DeleteAsync(
+        int id,
+        CancellationToken cancellationToken = default);
 }
