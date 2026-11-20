@@ -80,3 +80,45 @@ PUT {{TaskApi_HostAddress}}/api/tasks/999/complete
 
 ### Test: Delete nonexistent task (should return 404)
 DELETE {{TaskApi_HostAddress}}/api/tasks/999
+
+###
+
+PUT http://localhost:5205/api/tasks/999999/complete
+
+###
+
+PUT http://localhost:5205/api/tasks/1/complete
+
+###
+
+GET http://localhost:5205/api/tasks/1
+
+###
+
+PUT http://localhost:5205/api/tasks/999999/complete
+
+###
+
+PUT http://localhost:5205/api/tasks/999999/complete
+
+###
+
+### Register user
+POST http://localhost:5205/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "ali@example.com",
+  "password": "StrongPass123!"
+}
+
+###
+
+### Login
+POST http://localhost:5205/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "ali@example.com",
+  "password": "StrongPass123!"
+}

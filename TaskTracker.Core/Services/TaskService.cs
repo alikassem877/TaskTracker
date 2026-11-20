@@ -9,6 +9,7 @@ public class TaskService(ITaskRepository taskRepository)
     public async Task<TaskItem> AddTaskAsync(
         string title,
         Priority priority,
+        int userId,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
@@ -17,7 +18,8 @@ public class TaskService(ITaskRepository taskRepository)
             Id: 0,
             Title: title,
             Priority: priority,
-            IsDone: false
+            IsDone: false,
+            UserId: userId
         );
 
         await taskRepository.AddAsync(task, cancellationToken);
@@ -25,54 +27,49 @@ public class TaskService(ITaskRepository taskRepository)
         return task;
     }
 
-    public async Task CompleteAsync(
-        int id,
-        CancellationToken cancellationToken = default)
-    {
-        var task = await taskRepository.GetByIdAsync(id, cancellationToken);
-
-        if (task is null)
-        {
-            throw new TaskNotFoundException(
-                $"Task with ID {id} was not found.");
-        }
-
-        var completedTask = task with { IsDone = true };
-
-        await taskRepository.UpdateAsync(completedTask, cancellationToken);
-    }
-
     public async Task<IReadOnlyList<TaskItem>> GetAllTasksAsync(
+        int userId,
         CancellationToken cancellationToken = default)
     {
-        return await taskRepository.GetAllAsync(cancellationToken);
+        return await taskRepository.GetAllAsync(
+            userId, cancellationToken);
     }
 
     public async Task<TaskItem> GetTaskByIdAsync(
         int id,
+        int userId,
         CancellationToken cancellationToken = default)
     {
-        var task = await taskRepository.GetByIdAsync(id, cancellationToken);
+        var task = await taskRepository.GetByIdAsync(
+            id, userId, cancellationToken);
 
-        if (task is null)
-        {
+        return task ?? throw new TaskNotFoundException(
+            $"Task with ID {id} was not found.");
+    }
+
+    public async Task CompleteAsync(
+        int id,
+        int userId,
+        CancellationToken cancellationToken = default)
+    {
+        var completed = await taskRepository.CompleteAsync(
+            id, userId, cancellationToken);
+
+        if (!completed)
             throw new TaskNotFoundException(
                 $"Task with ID {id} was not found.");
-        }
-
-        return task;
     }
 
     public async Task DeleteTaskAsync(
         int id,
+        int userId,
         CancellationToken cancellationToken = default)
     {
-        var deleted = await taskRepository.DeleteAsync(id, cancellationToken);
+        var deleted = await taskRepository.DeleteAsync(
+            id, userId, cancellationToken);
 
         if (!deleted)
-        {
             throw new TaskNotFoundException(
                 $"Task with ID {id} was not found.");
-        }
     }
 }

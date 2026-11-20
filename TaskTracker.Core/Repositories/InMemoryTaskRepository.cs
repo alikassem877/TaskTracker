@@ -1,3 +1,4 @@
+
 using System.Collections.Concurrent;
 using TaskTracker.Models;
 
@@ -6,19 +7,29 @@ namespace TaskTracker.Repositories;
 public class InMemoryTaskRepository : ITaskRepository
 {
     private readonly ConcurrentDictionary<int, TaskItem> _tasks = new();
+    private int _nextId;
 
     public Task<IReadOnlyList<TaskItem>> GetAllAsync(
+        int userId,
         CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<TaskItem> tasks = _tasks.Values.ToList();
+        IReadOnlyList<TaskItem> tasks = _tasks.Values
+            .Where(task => task.UserId == userId)
+            .ToList();
+
         return Task.FromResult(tasks);
     }
 
     public Task<TaskItem?> GetByIdAsync(
         int id,
+        int userId,
         CancellationToken cancellationToken = default)
     {
         _tasks.TryGetValue(id, out var task);
+
+        if (task?.UserId != userId)
+            task = null;
+
         return Task.FromResult(task);
     }
 
@@ -26,41 +37,64 @@ public class InMemoryTaskRepository : ITaskRepository
         TaskItem task,
         CancellationToken cancellationToken = default)
     {
-        if (!_tasks.TryAdd(task.Id, task))
-        {
-            throw new InvalidOperationException(
-                $"Task with ID {task.Id} already exists."
-            );
-        }
+        var id = Interlocked.Increment(ref _nextId);
+
+        var newTask = task with { Id = id };
+
+        _tasks.TryAdd(id, newTask);
 
         return Task.CompletedTask;
     }
 
     public Task UpdateAsync(
-        TaskItem task,
+    TaskItem task,
+    int userId,
+    CancellationToken cancellationToken = default)
+{
+    if (!_tasks.TryGetValue(task.Id, out var existing)
+        || existing.UserId != userId)
+    {
+        return Task.CompletedTask;
+    }
+
+    var updated = task with { UserId = userId };
+
+    _tasks.TryUpdate(task.Id, updated, existing);
+
+    return Task.CompletedTask;
+}
+
+    public Task<bool> CompleteAsync(
+        int id,
+        int userId,
         CancellationToken cancellationToken = default)
     {
-        if (!_tasks.TryGetValue(task.Id, out var existing))
+        while (_tasks.TryGetValue(id, out var existing))
         {
-            throw new KeyNotFoundException(
-                $"Task with ID {task.Id} was not found."
-            );
+            if (existing.UserId != userId)
+                return Task.FromResult(false);
+
+            var updated = existing with { IsDone = true };
+
+            if (_tasks.TryUpdate(id, updated, existing))
+                return Task.FromResult(true);
         }
 
-        if (!_tasks.TryUpdate(task.Id, task, existing))
-        {
-            throw new InvalidOperationException(
-                $"Task with ID {task.Id} was modified concurrently."
-            );
-        }
-
-        return Task.CompletedTask;
+        return Task.FromResult(false);
     }
 
     public Task<bool> DeleteAsync(
         int id,
+        int userId,
         CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(_tasks.TryRemove(id, out _));
+        if (!_tasks.TryGetValue(id, out var task)
+            || task.UserId != userId)
+        {
+            return Task.FromResult(false);
+        }
+
+        return Task.FromResult(_tasks.TryRemove(
+            new KeyValuePair<int, TaskItem>(id, task)));
     }
 }

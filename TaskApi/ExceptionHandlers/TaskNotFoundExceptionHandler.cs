@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using TaskTracker.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace TaskApi.ExceptionHandlers;
 
@@ -22,6 +23,12 @@ public class TaskNotFoundExceptionHandler(
             title = "Task Not Found";
             logger.LogWarning(exception, "Task not found.");
         }
+        else if (exception is DbUpdateConcurrencyException)
+        {
+            statusCode = StatusCodes.Status404NotFound;
+            title = "Task Not Found";
+            logger.LogWarning(exception, "Task update affected no rows.");
+        }
         else if (exception is ArgumentException)
         {
             statusCode = StatusCodes.Status400BadRequest;
@@ -38,7 +45,9 @@ public class TaskNotFoundExceptionHandler(
         {
             Status = statusCode,
             Title = title,
-            Detail = exception.Message
+            Detail = exception is DbUpdateConcurrencyException
+    ? "The task could not be found."
+    : exception.Message
         };
 
         httpContext.Response.StatusCode = statusCode;

@@ -1,3 +1,4 @@
+
 using TaskTracker.Models;
 
 namespace TaskTracker.Repositories;
@@ -5,10 +6,12 @@ namespace TaskTracker.Repositories;
 public interface ITaskRepository
 {
     Task<IReadOnlyList<TaskItem>> GetAllAsync(
+        int userId,
         CancellationToken cancellationToken = default);
 
     Task<TaskItem?> GetByIdAsync(
         int id,
+        int userId,
         CancellationToken cancellationToken = default);
 
     Task AddAsync(
@@ -17,9 +20,16 @@ public interface ITaskRepository
 
     Task UpdateAsync(
         TaskItem task,
+        int userId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CompleteAsync(
+        int id,
+        int userId,
         CancellationToken cancellationToken = default);
 
     Task<bool> DeleteAsync(
         int id,
+        int userId,
         CancellationToken cancellationToken = default);
 }

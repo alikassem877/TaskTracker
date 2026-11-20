@@ -8,6 +8,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 {
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
+    public DbSet<User> Users => Set<User>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<TaskItem>(entity =>
@@ -20,6 +22,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
             entity.Property(task => task.Priority)
                 .HasConversion<string>();
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(user => user.Id);
+
+            entity.Property(user => user.Email)
+                .IsRequired();
+
+            entity.HasIndex(user => user.Email)
+                .IsUnique();
+
+            entity.Property(user => user.PasswordHash)
+                .IsRequired();
+
+            entity.HasMany(user => user.Tasks)
+            .WithOne()
+            .HasForeignKey(task => task.UserId);
         });
     }
 }
