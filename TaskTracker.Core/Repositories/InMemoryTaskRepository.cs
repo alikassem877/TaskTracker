@@ -46,22 +46,23 @@ public class InMemoryTaskRepository : ITaskRepository
         return Task.CompletedTask;
     }
 
-    public Task UpdateAsync(
+   public Task<bool> UpdateAsync(
     TaskItem task,
     int userId,
     CancellationToken cancellationToken = default)
 {
-    if (!_tasks.TryGetValue(task.Id, out var existing)
-        || existing.UserId != userId)
+    while (_tasks.TryGetValue(task.Id, out var existing))
     {
-        return Task.CompletedTask;
+        if (existing.UserId != userId)
+            return Task.FromResult(false);
+
+        var updated = task with { UserId = userId };
+
+        if (_tasks.TryUpdate(task.Id, updated, existing))
+            return Task.FromResult(true);
     }
 
-    var updated = task with { UserId = userId };
-
-    _tasks.TryUpdate(task.Id, updated, existing);
-
-    return Task.CompletedTask;
+    return Task.FromResult(false);
 }
 
     public Task<bool> CompleteAsync(

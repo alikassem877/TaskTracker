@@ -72,4 +72,17 @@ public class TaskService(ITaskRepository taskRepository)
             throw new TaskNotFoundException(
                 $"Task with ID {id} was not found.");
     }
+
+    public async Task UpdateTaskAsync(
+    TaskItem task,
+    int userId,
+    CancellationToken cancellationToken = default)
+{
+    var updated = await taskRepository.UpdateAsync(
+        task, userId, cancellationToken);
+
+    if (!updated)
+        throw new TaskNotFoundException(
+            $"Task with ID {task.Id} was not found.");
+}
 }

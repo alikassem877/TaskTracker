@@ -18,10 +18,10 @@ public interface ITaskRepository
         TaskItem task,
         CancellationToken cancellationToken = default);
 
-    Task UpdateAsync(
-        TaskItem task,
-        int userId,
-        CancellationToken cancellationToken = default);
+    Task<bool> UpdateAsync(
+TaskItem task,
+int userId,
+CancellationToken cancellationToken = default);
 
     Task<bool> CompleteAsync(
         int id,

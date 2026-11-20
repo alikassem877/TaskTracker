@@ -37,7 +37,7 @@ public class EfTaskRepository(AppDbContext context) : ITaskRepository
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(
+    public async Task<bool> UpdateAsync(
     TaskItem task,
     int userId,
     CancellationToken cancellationToken = default)
@@ -48,7 +48,7 @@ public class EfTaskRepository(AppDbContext context) : ITaskRepository
             cancellationToken);
 
     if (existingTask is null)
-        return;
+        return false;
 
     var updatedTask = existingTask with
     {
@@ -60,6 +60,8 @@ public class EfTaskRepository(AppDbContext context) : ITaskRepository
     context.Entry(existingTask).CurrentValues.SetValues(updatedTask);
 
     await context.SaveChangesAsync(cancellationToken);
+
+    return true;
 }
 
     public async Task<bool> CompleteAsync(

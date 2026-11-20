@@ -60,3 +60,10 @@ var taskOne = await repository.GetByIdAsync(1, userId);
 
 Console.WriteLine($"Task 1 still exists: {taskOne is not null}");
 Console.WriteLine($"Task 1 completed: {taskOne?.IsDone}");
+
+var updated = await repository.UpdateAsync(
+    new TaskItem(999, "Missing task", Priority.Low, false, userId),
+    userId
+);
+
+Console.WriteLine($"Missing task updated: {updated}");
