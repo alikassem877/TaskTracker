@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using Microsoft.Extensions.Configuration;
 using TaskTracker.Models;
+using Npgsql;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -58,7 +59,18 @@ public class AuthService(
 
         context.Users.Add(user);
 
-        await context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+            when (ex.InnerException is PostgresException postgresException &&
+                  postgresException.SqlState == PostgresErrorCodes.UniqueViolation &&
+                  postgresException.ConstraintName == "IX_Users_Email")
+        {
+            throw new InvalidOperationException(
+                "Email is already registered.", ex);
+        }
 
         return user;
     }
