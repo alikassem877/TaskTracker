@@ -47,9 +47,18 @@ public class ExceptionHandlerTests
 
     private class FakeRepository : ITaskRepository
     {
-        public Task<IReadOnlyList<TaskItem>> GetAllAsync(
-            int userId, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<TaskItem>>([]);
+
+        public Task<(IReadOnlyList<TaskItem> Items, int TotalCount)> GetAllAsync(
+    int userId,
+    int page,
+    int pageSize,
+    bool? isDone,
+    Priority? priority,
+    string? search,
+    CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<(IReadOnlyList<TaskItem>, int)>(([], 0));
+        }
 
         public Task<TaskItem?> GetByIdAsync(
             int id, int userId, CancellationToken cancellationToken = default)

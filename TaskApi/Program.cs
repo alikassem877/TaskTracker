@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
+using TaskTracker.Models;
 using System.Security.Claims;
 using TaskApi.DTOs;
 using TaskApi.ExceptionHandlers;
@@ -124,18 +125,43 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // GET: Retrieve all tasks belonging to the authenticated user
+// GET: Retrieve paginated and filtered tasks
 app.MapGet("/api/tasks", async (
     ClaimsPrincipal user,
     TaskService service,
+    int? page,
+    int? pageSize,
+    bool? isDone,
+    Priority? priority,
+    string? search,
     CancellationToken cancellationToken) =>
 {
     var userId = GetUserId(user);
 
-    var tasks = await service.GetAllTasksAsync(
+    var currentPage = page ?? 1;
+    var currentPageSize = pageSize ?? 10;
+
+    if (currentPage < 1 || currentPageSize < 1)
+        return Results.BadRequest("Page and pageSize must be positive.");
+
+    currentPageSize = Math.Min(currentPageSize, 50);
+
+    var result = await service.GetAllTasksAsync(
         userId,
+        currentPage,
+        currentPageSize,
+        isDone,
+        priority,
+        search,
         cancellationToken);
 
-    return Results.Ok(tasks);
+    return Results.Ok(new
+    {
+        items = result.Items,
+        page = currentPage,
+        pageSize = currentPageSize,
+        totalCount = result.TotalCount
+    });
 }).RequireAuthorization();
 
 // GET: Retrieve one task belonging to the authenticated user

@@ -5,9 +5,15 @@ namespace TaskTracker.Repositories;
 
 public interface ITaskRepository
 {
-    Task<IReadOnlyList<TaskItem>> GetAllAsync(
-        int userId,
-        CancellationToken cancellationToken = default);
+
+    Task<(IReadOnlyList<TaskItem> Items, int TotalCount)> GetAllAsync(
+    int userId,
+    int page,
+    int pageSize,
+    bool? isDone,
+    Priority? priority,
+    string? search,
+    CancellationToken cancellationToken = default);
 
     Task<TaskItem?> GetByIdAsync(
         int id,

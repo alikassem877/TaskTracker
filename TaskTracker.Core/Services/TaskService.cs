@@ -27,13 +27,24 @@ public class TaskService(ITaskRepository taskRepository)
         return task;
     }
 
-    public async Task<IReadOnlyList<TaskItem>> GetAllTasksAsync(
-        int userId,
-        CancellationToken cancellationToken = default)
-    {
-        return await taskRepository.GetAllAsync(
-            userId, cancellationToken);
-    }
+    public async Task<(IReadOnlyList<TaskItem> Items, int TotalCount)> GetAllTasksAsync(
+    int userId,
+    int page,
+    int pageSize,
+    bool? isDone,
+    Priority? priority,
+    string? search,
+    CancellationToken cancellationToken = default)
+{
+    return await taskRepository.GetAllAsync(
+        userId,
+        page,
+        pageSize,
+        isDone,
+        priority,
+        search,
+        cancellationToken);
+}
 
     public async Task<TaskItem> GetTaskByIdAsync(
         int id,

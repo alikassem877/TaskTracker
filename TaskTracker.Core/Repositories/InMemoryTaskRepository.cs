@@ -9,15 +9,40 @@ public class InMemoryTaskRepository : ITaskRepository
     private readonly ConcurrentDictionary<int, TaskItem> _tasks = new();
     private int _nextId;
 
-    public Task<IReadOnlyList<TaskItem>> GetAllAsync(
-        int userId,
-        CancellationToken cancellationToken = default)
+    public Task<(IReadOnlyList<TaskItem> Items, int TotalCount)> GetAllAsync(
+    int userId,
+    int page,
+    int pageSize,
+    bool? isDone,
+    Priority? priority,
+    string? search,
+    CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<TaskItem> tasks = _tasks.Values
-            .Where(task => task.UserId == userId)
+        var query = _tasks.Values
+            .Where(task => task.UserId == userId);
+
+        if (isDone.HasValue)
+            query = query.Where(task => task.IsDone == isDone.Value);
+
+        if (priority.HasValue)
+            query = query.Where(task => task.Priority == priority.Value);
+
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(task =>
+                task.Title.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+        var filteredTasks = query
+            .OrderBy(task => task.Id)
             .ToList();
 
-        return Task.FromResult(tasks);
+        var totalCount = filteredTasks.Count;
+
+        IReadOnlyList<TaskItem> items = filteredTasks
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return Task.FromResult((items, totalCount));
     }
 
     public Task<TaskItem?> GetByIdAsync(
@@ -46,24 +71,24 @@ public class InMemoryTaskRepository : ITaskRepository
         return Task.CompletedTask;
     }
 
-   public Task<bool> UpdateAsync(
-    TaskItem task,
-    int userId,
-    CancellationToken cancellationToken = default)
-{
-    while (_tasks.TryGetValue(task.Id, out var existing))
+    public Task<bool> UpdateAsync(
+     TaskItem task,
+     int userId,
+     CancellationToken cancellationToken = default)
     {
-        if (existing.UserId != userId)
-            return Task.FromResult(false);
+        while (_tasks.TryGetValue(task.Id, out var existing))
+        {
+            if (existing.UserId != userId)
+                return Task.FromResult(false);
 
-        var updated = task with { UserId = userId };
+            var updated = task with { UserId = userId };
 
-        if (_tasks.TryUpdate(task.Id, updated, existing))
-            return Task.FromResult(true);
+            if (_tasks.TryUpdate(task.Id, updated, existing))
+                return Task.FromResult(true);
+        }
+
+        return Task.FromResult(false);
     }
-
-    return Task.FromResult(false);
-}
 
     public Task<bool> CompleteAsync(
         int id,
