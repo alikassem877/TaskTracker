@@ -1,5 +1,7 @@
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
@@ -11,6 +13,19 @@ using TaskTracker.Repositories;
 using TaskTracker.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("login", limiter =>
+    {
+        limiter.PermitLimit = 5;
+        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.QueueLimit = 0;
+    });
+
+    options.RejectionStatusCode =
+        StatusCodes.Status429TooManyRequests;
+});
 
 // OpenAPI and validation
 builder.Services.AddOpenApi();
@@ -104,6 +119,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -202,7 +218,8 @@ app.MapPost("/api/auth/login", async (
         user.Email,
         token = authService.GenerateToken(user)
     });
-});
+}).RequireRateLimiting("login");
+
 
 // PUT: Complete a task belonging to the authenticated user
 app.MapPut("/api/tasks/{id}/complete", async (
