@@ -1,3 +1,4 @@
+
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Models;
 
@@ -15,6 +16,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         modelBuilder.Entity<TaskItem>(entity =>
         {
             entity.HasKey(task => task.Id);
+
+            entity.HasIndex(task => new { task.UserId, task.IsDone });
 
             entity.Property(task => task.Title)
                 .IsRequired()
@@ -37,10 +40,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(user => user.PasswordHash)
                 .IsRequired();
 
-             entity.HasMany(user => user.Tasks)
-           .WithOne()
-           .HasForeignKey(task => task.UserId)
-            .IsRequired();
+            entity.HasMany(user => user.Tasks)
+                .WithOne()
+                .HasForeignKey(task => task.UserId)
+                .IsRequired();
         });
     }
 }

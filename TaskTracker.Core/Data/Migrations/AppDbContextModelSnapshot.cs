@@ -47,7 +47,7 @@ namespace TaskTracker.Core.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "IsDone");
 
                     b.ToTable("Tasks");
                 });
