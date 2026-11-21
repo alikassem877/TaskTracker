@@ -92,6 +92,16 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // Dependency injection
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ITaskRepository, EfTaskRepository>();
@@ -121,6 +131,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRateLimiter();
+app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -280,5 +291,18 @@ app.MapDelete("/api/tasks/{id}", async (
 
     return Results.NoContent();
 }).RequireAuthorization();
+
+app.MapGet("/health", async (
+    AppDbContext db,
+    CancellationToken cancellationToken) =>
+{
+    var isConnected = await db.Database.CanConnectAsync(cancellationToken);
+
+    return isConnected
+        ? Results.Ok(new { status = "Healthy", database = "Connected" })
+        : Results.Json(
+            new { status = "Unhealthy", database = "Unavailable" },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+});
 
 app.Run();
