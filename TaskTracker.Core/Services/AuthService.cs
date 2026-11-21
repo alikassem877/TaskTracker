@@ -1,14 +1,13 @@
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using TaskTracker.Data;
 using Microsoft.Extensions.Configuration;
-using TaskTracker.Models;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
+using TaskTracker.Data;
+using TaskTracker.Models;
 
 namespace TaskTracker.Services;
 
@@ -17,6 +16,21 @@ public class AuthService(
     IConfiguration configuration)
 {
     private readonly PasswordHasher<User> _passwordHasher = new();
+
+    private readonly User _dummyUser = new()
+    {
+        Email = "dummy@example.com",
+        PasswordHash = string.Empty
+    };
+
+    private readonly Lazy<string> _dummyPasswordHash = new(() =>
+    new PasswordHasher<User>().HashPassword(
+        new User
+        {
+            Email = "dummy@example.com",
+            PasswordHash = string.Empty
+        },
+        "Dummy-Password-For-Timing"));
 
     public async Task<User> RegisterAsync(
         string email,
@@ -53,9 +67,7 @@ public class AuthService(
             PasswordHash = string.Empty
         };
 
-        user.PasswordHash = _passwordHasher.HashPassword(
-            user,
-            password);
+        user.PasswordHash = _passwordHasher.HashPassword(user, password);
 
         context.Users.Add(user);
 
@@ -96,17 +108,16 @@ public class AuthService(
 
         var claims = new[]
         {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Email, user.Email)
-    };
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email)
+        };
 
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(15),
-            signingCredentials: credentials
-        );
+            signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
@@ -124,7 +135,14 @@ public class AuthService(
                 cancellationToken);
 
         if (user is null)
+        {
+            _passwordHasher.VerifyHashedPassword(
+                _dummyUser,
+                _dummyPasswordHash.Value,
+                password);
+
             return null;
+        }
 
         var result = _passwordHasher.VerifyHashedPassword(
             user,
@@ -136,9 +154,7 @@ public class AuthService(
 
         if (result == PasswordVerificationResult.SuccessRehashNeeded)
         {
-            user.PasswordHash = _passwordHasher.HashPassword(
-                user,
-                password);
+            user.PasswordHash = _passwordHasher.HashPassword(user, password);
 
             await context.SaveChangesAsync(cancellationToken);
         }
