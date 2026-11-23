@@ -17,12 +17,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddFixedWindowLimiter("login", limiter =>
-    {
-        limiter.PermitLimit = 5;
-        limiter.Window = TimeSpan.FromMinutes(1);
-        limiter.QueueLimit = 0;
-    });
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
 
     options.RejectionStatusCode =
         StatusCodes.Status429TooManyRequests;
@@ -92,11 +97,15 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+var frontendOrigin = builder.Configuration["Frontend:Origin"]
+    ?? throw new InvalidOperationException(
+        "Frontend:Origin is not configured.");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(frontendOrigin)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -306,3 +315,5 @@ app.MapGet("/health", async (
 });
 
 app.Run();
+
+public partial class Program { }

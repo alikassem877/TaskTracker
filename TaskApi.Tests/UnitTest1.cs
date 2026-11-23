@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
@@ -13,30 +14,30 @@ public class ExceptionHandlerTests
     [Fact]
     public async Task ArgumentException_Returns400()
     {
-        using var server = new TestServer(
-            new WebHostBuilder()
-                .ConfigureServices(services =>
-                {
-                    services.AddLogging();
-                    services.AddExceptionHandler<TaskNotFoundExceptionHandler>();
-                    services.AddProblemDetails();
-                    services.AddScoped<ITaskRepository, FakeRepository>();
-                    services.AddScoped<TaskService>();
-                })
-                .Configure(app =>
-                {
-                    app.UseExceptionHandler();
+        var builder = WebApplication.CreateBuilder();
 
-                    app.Run(async context =>
-                    {
-                        var service = context.RequestServices
-                            .GetRequiredService<TaskService>();
+        builder.WebHost.UseTestServer();
 
-                        await service.AddTaskAsync(" ", Priority.Low, 1);
-                    });
-                }));
+        builder.Services.AddExceptionHandler<TaskNotFoundExceptionHandler>();
+        builder.Services.AddProblemDetails();
+        builder.Services.AddScoped<ITaskRepository, FakeRepository>();
+        builder.Services.AddScoped<TaskService>();
 
-        using var client = server.CreateClient();
+        await using var app = builder.Build();
+
+        app.UseExceptionHandler();
+
+        app.Run(async context =>
+        {
+            var service = context.RequestServices
+                .GetRequiredService<TaskService>();
+
+            await service.AddTaskAsync(" ", Priority.Low, 1);
+        });
+
+        await app.StartAsync();
+
+        using var client = app.GetTestClient();
 
         var response = await client.GetAsync("/");
 
@@ -47,37 +48,43 @@ public class ExceptionHandlerTests
 
     private class FakeRepository : ITaskRepository
     {
-
         public Task<(IReadOnlyList<TaskItem> Items, int TotalCount)> GetAllAsync(
-    int userId,
-    int page,
-    int pageSize,
-    bool? isDone,
-    Priority? priority,
-    string? search,
-    CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult<(IReadOnlyList<TaskItem>, int)>(([], 0));
-        }
+            int userId,
+            int page,
+            int pageSize,
+            bool? isDone,
+            Priority? priority,
+            string? search,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<(IReadOnlyList<TaskItem>, int)>(([], 0));
 
         public Task<TaskItem?> GetByIdAsync(
-            int id, int userId, CancellationToken cancellationToken = default)
+            int id,
+            int userId,
+            CancellationToken cancellationToken = default)
             => Task.FromResult<TaskItem?>(null);
 
         public Task AddAsync(
-            TaskItem task, CancellationToken cancellationToken = default)
+            TaskItem task,
+            CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
         public Task<bool> UpdateAsync(
-            TaskItem task, int userId, CancellationToken cancellationToken = default)
+            TaskItem task,
+            int userId,
+            CancellationToken cancellationToken = default)
             => Task.FromResult(false);
 
         public Task<bool> CompleteAsync(
-            int id, int userId, CancellationToken cancellationToken = default)
+            int id,
+            int userId,
+            CancellationToken cancellationToken = default)
             => Task.FromResult(false);
 
         public Task<bool> DeleteAsync(
-            int id, int userId, CancellationToken cancellationToken = default)
+            int id,
+            int userId,
+            CancellationToken cancellationToken = default)
             => Task.FromResult(false);
     }
 }

@@ -16,30 +16,38 @@ public class EfTaskRepository(AppDbContext context) : ITaskRepository
     Priority? priority,
     string? search,
     CancellationToken cancellationToken = default)
-{
-    var query = context.Tasks
-        .AsNoTracking()
-        .Where(task => task.UserId == userId);
+    {
+        var query = context.Tasks
+            .AsNoTracking()
+            .Where(task => task.UserId == userId);
 
-    if (isDone.HasValue)
-        query = query.Where(task => task.IsDone == isDone.Value);
+        if (isDone.HasValue)
+            query = query.Where(task => task.IsDone == isDone.Value);
 
-    if (priority.HasValue)
-        query = query.Where(task => task.Priority == priority.Value);
+        if (priority.HasValue)
+            query = query.Where(task => task.Priority == priority.Value);
 
-    if (!string.IsNullOrWhiteSpace(search))
-        query = query.Where(task => task.Title.Contains(search));
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var escapedSearch = search
+                .Replace("\\", "\\\\")
+                .Replace("%", "\\%")
+                .Replace("_", "\\_");
 
-    var totalCount = await query.CountAsync(cancellationToken);
+            query = query.Where(task =>
+                EF.Functions.ILike(task.Title, $"%{escapedSearch}%", "\\"));
+        }
 
-    var items = await query
-        .OrderBy(task => task.Id)
-        .Skip((page - 1) * pageSize)
-        .Take(pageSize)
-        .ToListAsync(cancellationToken);
+        var totalCount = await query.CountAsync(cancellationToken);
 
-    return (items, totalCount);
-}
+        var items = await query
+            .OrderBy(task => task.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
+    }
 
     public async Task<TaskItem?> GetByIdAsync(
         int id,
@@ -65,28 +73,28 @@ public class EfTaskRepository(AppDbContext context) : ITaskRepository
     TaskItem task,
     int userId,
     CancellationToken cancellationToken = default)
-{
-    var existingTask = await context.Tasks
-        .FirstOrDefaultAsync(
-            item => item.Id == task.Id && item.UserId == userId,
-            cancellationToken);
-
-    if (existingTask is null)
-        return false;
-
-    var updatedTask = existingTask with
     {
-        Title = task.Title,
-        Priority = task.Priority,
-        IsDone = task.IsDone
-    };
+        var existingTask = await context.Tasks
+            .FirstOrDefaultAsync(
+                item => item.Id == task.Id && item.UserId == userId,
+                cancellationToken);
 
-    context.Entry(existingTask).CurrentValues.SetValues(updatedTask);
+        if (existingTask is null)
+            return false;
 
-    await context.SaveChangesAsync(cancellationToken);
+        var updatedTask = existingTask with
+        {
+            Title = task.Title,
+            Priority = task.Priority,
+            IsDone = task.IsDone
+        };
 
-    return true;
-}
+        context.Entry(existingTask).CurrentValues.SetValues(updatedTask);
+
+        await context.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
 
     public async Task<bool> CompleteAsync(
         int id,
